@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Portal</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #f4f6f9; }
+        header { background: #2c3e50; color: white; padding: 15px; text-align: center; }
+        nav { display: flex; background: #34495e; }
+        nav button { flex: 1; padding: 12px; border: none; color: white; background: #34495e; font-weight: bold; cursor: pointer; }
+        nav button:hover { background: #1abc9c; }
+        .container { padding: 20px; }
+        .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .hidden { display: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background: #1abc9c; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        input { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button.primary { background: #1abc9c; color: white; border: none; padding: 12px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        button.danger { background: #e74c3c; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h2>Admin Portal - Railway Management</h2>
+    </header>
+
+    <nav>
+        <button onclick="showSection('home')">Home / Dashboard</button>
+        <button onclick="showSection('train')">Register Train</button>
+        <button onclick="logout()">Logout</button>
+    </nav>
+
+    <div class="container">
+
+        <div id="home">
+            <div class="card">
+                <h3>1. Aggregate Data Section</h3>
+                
+                <p><b>Tickets Booked Per Class:</b></p>
+                <div id="classStatsTable"></div>
+
+                <p style="margin-top: 20px;"><b>Sales Done Per Quarter:</b></p>
+                <div id="quarterSalesTable"></div>
+            </div>
+
+            <div class="card">
+                <h3>2. Customer Table Section</h3>
+                <div id="customerTableContainer"></div>
+            </div>
+        </div>
+
+        <div id="train" class="hidden">
+            <div class="card">
+                <h3>3. Register a New Train</h3>
+                <input id="trainName" placeholder="Name of Train">
+                <input id="seats" type="number" placeholder="Number of Seats" min="1">
+                <input id="from" placeholder="From (Source Station)">
+                <input id="to" placeholder="To (Destination Station)">
+                <input id="owner" placeholder="Ownership for the Train">
+
+                <button class="primary" onclick="addTrain()">Register Train</button>
+
+                <h4 style="margin-top: 25px;">Currently Registered Trains:</h4>
+                <div id="trainListTable"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function showSection(id) {
+            document.querySelectorAll(".container > div").forEach(d => d.classList.add("hidden"));
+            document.getElementById(id).classList.remove("hidden");
+            if (id === "home") {
+                loadAggregateData();
+                loadCustomerTable();
+            }
+            if (id === "train") {
+                loadTrainTable();
+            }
+        }
+
+        function loadAggregateData() {
+            let tickets = JSON.parse(localStorage.getItem("tickets") || "[]");
+            let classCount = { "First Class": 0, "AC Tier 1": 0, "AC Tier 2": 0, "Tatkal": 0 };
+
+            tickets.forEach(t => {
+                let count = parseInt(t.tickets) || 0;
+                if (classCount[t.category] !== undefined) {
+                    classCount[t.category] += count;
+                }
+            });
+
+            let classHtml = `<table><tr><th>Class Category</th><th>Total Tickets Booked</th></tr>`;
+            for (let category in classCount) {
+                classHtml += `<tr><td>${category}</td><td><b>${classCount[category]}</b></td></tr>`;
+            }
+            classHtml += `</table>`;
+            document.getElementById("classStatsTable").innerHTML = classHtml;
+
+            let quarterHtml = `<table>
+                <tr><th>Quarter</th><th>Months</th><th>Total Seats Sold</th></tr>
+                <tr><td><b>Q1</b></td><td>January - March</td><td>560</td></tr>
+                <tr><td><b>Q2</b></td><td>April - June</td><td>1245</td></tr>
+                <tr><td><b>Q3</b></td><td>July - September</td><td>750</td></tr>
+                <tr><td><b>Q4</b></td><td>October - December</td><td>2150</td></tr>
+            </table>`;
+            document.getElementById("quarterSalesTable").innerHTML = quarterHtml;
+        }
+
+        // ✅ FIXED: 
+        function loadCustomerTable() {
+            let tickets = JSON.parse(localStorage.getItem("tickets") || "[]");
+            
+            let html = `<table>
+            <tr>
+                <th>S.No</th>
+                <th>Ticket ID</th>
+                <th>Booked Account</th>
+                <th>Passenger Name</th>
+                <th>Train Details</th>
+                <th>Route (From ➔ To)</th>
+                <th>Date & Time</th>
+                <th>Seats</th>
+                <th>Action</th>
+            </tr>`;
+
+            if (tickets.length === 0) {
+                html += `<tr><td colspan="9">No active bookings made yet by any customers.</td></tr>`;
+            } else {
+                tickets.forEach((t, index) => {
+                    html += `<tr>
+                        <td>${index + 1}</td>
+                        <td><mark><b>${t.ticketId}</b></mark></td>
+                        <td><b>${t.bookedBy || 'Guest'}</b></td>
+                        <td>${t.name}</td>
+                        <td>${t.trainId} (${t.category})</td>
+                        <td>${t.boarding} ➔ ${t.destination}</td>
+                        <td style="font-size: 12px;">${t.boardingDateTime}</td>
+                        <td><b>${t.tickets} Seat(s)</b></td>
+                        <td><button class="danger" onclick="cancelTicketByAdmin('${t.ticketId}')">Cancel Booking</button></td>
+                    </tr>`;
+                });
+            }
+
+            html += `</table>`;
+            document.getElementById("customerTableContainer").innerHTML = html;
+        }
+
+       
+        function cancelTicketByAdmin(id) {
+            if (confirm(`Are you sure you want to cancel Ticket ID: ${id}?`)) {
+                let list = JSON.parse(localStorage.getItem("tickets") || "[]");
+                list = list.filter(t => t.ticketId !== id);
+                localStorage.setItem("tickets", JSON.stringify(list));
+                loadCustomerTable();
+                loadAggregateData(); 
+            }
+        }
+
+        function addTrain() {
+            let name = document.getElementById("trainName").value.trim();
+            let seats = document.getElementById("seats").value.trim();
+            let from = document.getElementById("from").value.trim();
+            let to = document.getElementById("to").value.trim();
+            let owner = document.getElementById("owner").value.trim();
+
+            if (!name || !seats || !from || !to || !owner) { alert("Please fill all fields!"); return; }
+
+            let newTrain = { trainId: name, name: name, seats: seats, from: from, to: to, owner: owner };
+            let trains = JSON.parse(localStorage.getItem("registeredTrains") || "[]");
+            trains.push(newTrain);
+            localStorage.setItem("registeredTrains", JSON.stringify(trains));
+
+            alert(`Train "${name}" registered! Available for customers.`);
+            document.getElementById("trainName").value = "";
+            document.getElementById("seats").value = "";
+            document.getElementById("from").value = "";
+            document.getElementById("to").value = "";
+            document.getElementById("owner").value = "";
+            loadTrainTable();
+        }
+
+        function loadTrainTable() {
+            let trains = JSON.parse(localStorage.getItem("registeredTrains") || "[]");
+            let html = `<table><tr><th>Train ID / Name</th><th>Seats</th><th>From</th><th>To</th><th>Ownership</th><th>Action</th></tr>`;
+            if (trains.length === 0) { html += `<tr><td colspan="6">No trains registered.</td></tr>`; } 
+            else {
+                trains.forEach((trn, index) => {
+                    html += `<tr><td><b>${trn.name}</b></td><td>${trn.seats}</td><td>${trn.from}</td><td>${trn.to}</td><td>${trn.owner}</td><td><button class="danger" onclick="deleteTrain(${index})">Remove</button></td></tr>`;
+                });
+            }
+            html += `</table>`;
+            document.getElementById("trainListTable").innerHTML = html;
+        }
+
+        function deleteTrain(index) {
+            if (confirm("Remove this train?")) {
+                let trains = JSON.parse(localStorage.getItem("registeredTrains") || "[]");
+                trains.splice(index, 1);
+                localStorage.setItem("registeredTrains", JSON.stringify(trains));
+                loadTrainTable();
+            }
+        }
+
+        function logout() {
+            if (confirm("Logout from Admin Portal?")) { localStorage.removeItem("currentUser"); window.location.href = "index.html"; }
+        }
+
+        window.onload = function() { loadAggregateData(); loadCustomerTable(); };
+    </script>
+</body>
+</html>

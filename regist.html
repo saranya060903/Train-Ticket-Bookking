@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: "Segoe UI";
+    background: linear-gradient(135deg,#415669,#3b585a);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.container {
+    width: 380px;
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+}
+input {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+input.valid { border:2px solid green; }
+input.invalid { border:2px solid red; }
+
+.error {
+    color:red;
+    font-size:12px;
+}
+
+button {
+    width:100%;
+    margin-top:15px;
+    padding:12px;
+    background:#007bff;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+button:hover {
+    background:#0056b3;
+}
+
+p {
+    text-align:center;
+    margin-top:15px;
+}
+
+a {
+    color:#007bff;
+    text-decoration:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h2>Create Account</h2>
+
+<input id="username" placeholder="Username">
+<div class="error" id="userError"></div>
+
+<input id="email" placeholder="Email">
+<div class="error" id="emailError"></div>
+
+<input type="password" id="password" placeholder="Password">
+<div class="error" id="passError"></div>
+
+<input type="password" id="confirmPassword" placeholder="Confirm Password">
+<div class="error" id="confirmError"></div>
+
+<!-- ✅ MOBILE -->
+<input id="mobile" placeholder="Mobile" maxlength="10"
+oninput="onlyNumbers(this); validateMobile();">
+<div class="error" id="mobileError"></div>
+
+<!-- ✅ AADHAAR -->
+<input id="aadhaar" placeholder="Aadhaar" maxlength="12"
+oninput="onlyNumbers(this); validateAadhaar();">
+<div class="error" id="aadhaarError"></div>
+
+<button onclick="register()">Register</button>
+
+<!-- ✅ LOGIN LINK -->
+<p>Already registered? <a href="index.html">Login here</a></p>
+
+</div>
+
+<script>
+
+// 🔥 ONLY NUMBERS FUNCTION
+function onlyNumbers(input){
+    input.value = input.value.replace(/[^0-9]/g,'');
+}
+
+// USERNAME
+function validateUsername(){
+    if(!/^[A-Za-z]{6,}$/.test(username.value)){
+        userError.innerText="Username must be 6 letters";
+        username.classList.add("invalid");
+        return false;
+    }
+    userError.innerText="";
+    username.classList.remove("invalid");
+    username.classList.add("valid");
+    return true;
+}
+
+// EMAIL
+function validateEmail(){
+    if(!email.value.includes("@") || !email.value.includes(".")){
+        emailError.innerText="Invalid email";
+        email.classList.add("invalid");
+        return false;
+    }
+    emailError.innerText="";
+    email.classList.remove("invalid");
+    email.classList.add("valid");
+    return true;
+}
+
+// PASSWORD
+function validatePassword(){
+    if(!/^(?=.*[A-Z])(?=.*\d)(?=.*[\W]).{8,}$/.test(password.value)){
+        passError.innerText="8+ chars, 1 uppercase, number, special";
+        password.classList.add("invalid");
+        return false;
+    }
+    passError.innerText="";
+    password.classList.remove("invalid");
+    password.classList.add("valid");
+    return true;
+}
+
+// CONFIRM PASSWORD
+function validateConfirm(){
+    if(password.value !== confirmPassword.value){
+        confirmError.innerText="Passwords not match";
+        confirmPassword.classList.add("invalid");
+        return false;
+    }
+    confirmError.innerText="";
+    confirmPassword.classList.remove("invalid");
+    confirmPassword.classList.add("valid");
+    return true;
+}
+
+// MOBILE
+function validateMobile(){
+    if(!/^\d{10}$/.test(mobile.value)){
+        mobileError.innerText="Must be 10 digits";
+        mobile.classList.add("invalid");
+        return false;
+    }
+    mobileError.innerText="";
+    mobile.classList.remove("invalid");
+    mobile.classList.add("valid");
+    return true;
+}
+
+// AADHAAR
+function validateAadhaar(){
+    if(!/^\d{12}$/.test(aadhaar.value)){
+        aadhaarError.innerText="Must be 12 digits";
+        aadhaar.classList.add("invalid");
+        return false;
+    }
+    aadhaarError.innerText="";
+    aadhaar.classList.remove("invalid");
+    aadhaar.classList.add("valid");
+    return true;
+}
+
+// REAL-TIME FOR OTHER FIELDS
+username.oninput = validateUsername;
+email.oninput = validateEmail;
+password.oninput = validatePassword;
+confirmPassword.oninput = validateConfirm;
+
+// REGISTER
+function register(){
+
+    let isValid = true;
+
+    if(!validateUsername()) isValid=false;
+    if(!validateEmail()) isValid=false;
+    if(!validatePassword()) isValid=false;
+    if(!validateConfirm()) isValid=false;
+    if(!validateMobile()) isValid=false;
+    if(!validateAadhaar()) isValid=false;
+
+    if(!isValid){
+        alert("❌ Fix all errors first");
+        return;
+    }
+
+    let userData={
+        username:username.value,
+        password:password.value,
+        email:email.value,
+        mobile:mobile.value,
+        aadhaar:aadhaar.value
+    };
+
+    localStorage.setItem(username.value,JSON.stringify(userData));
+
+    alert("✅ Registration Successful");
+}
+<!-- ONLY CHANGE: address + currentUser added -->
+
+
+function register(){
+
+let isValid=true;
+
+if(!validateUsername()) isValid=false;
+if(!validateEmail()) isValid=false;
+if(!validatePassword()) isValid=false;
+if(!validateConfirm()) isValid=false;
+if(!validateMobile()) isValid=false;
+if(!validateAadhaar()) isValid=false;
+
+if(!isValid){
+alert("❌ Fix all errors first");
+return;
+}
+
+let userData={
+username:username.value,
+password:password.value,
+email:email.value,
+mobile:mobile.value,
+aadhaar:aadhaar.value,
+
+// ✅ IMPORTANT FIX
+address:""
+};
+
+localStorage.setItem(username.value,JSON.stringify(userData));
+
+// ✅ SAVE CURRENT USER
+localStorage.setItem("currentUser", username.value);
+
+alert("✅ Registration Successful");
+
+window.location.href="index.html";
+}
+
+</script>
+
+</body>
+</html>

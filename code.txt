@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: "Segoe UI";
+    background: linear-gradient(135deg,#415669,#3b585a);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.container {
+    width: 380px;
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+}
+input {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+input.valid { border:2px solid green; }
+input.invalid { border:2px solid red; }
+
+.error {
+    color:red;
+    font-size:12px;
+}
+
+button {
+    width:100%;
+    margin-top:15px;
+    padding:12px;
+    background:#007bff;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+button:hover {
+    background:#0056b3;
+}
+
+p {
+    text-align:center;
+    margin-top:15px;
+}
+
+a {
+    color:#007bff;
+    text-decoration:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h2>Create Account</h2>
+
+<input id="username" placeholder="Username">
+<div class="error" id="userError"></div>
+
+<input id="email" placeholder="Email">
+<div class="error" id="emailError"></div>
+
+<input type="password" id="password" placeholder="Password">
+<div class="error" id="passError"></div>
+
+<input type="password" id="confirmPassword" placeholder="Confirm Password">
+<div class="error" id="confirmError"></div>
+
+<!-- ? MOBILE -->
+<input id="mobile" placeholder="Mobile" maxlength="10"
+oninput="onlyNumbers(this); validateMobile();">
+<div class="error" id="mobileError"></div>
+
+<!-- ? AADHAAR -->
+<input id="aadhaar" placeholder="Aadhaar" maxlength="12"
+oninput="onlyNumbers(this); validateAadhaar();">
+<div class="error" id="aadhaarError"></div>
+
+<button onclick="register()">Register</button>
+
+<!-- ? LOGIN LINK -->
+<p>Already registered? <a href="index.html">Login here</a></p>
+
+</div>
+
+<script>
+
+// ?? ONLY NUMBERS FUNCTION
+function onlyNumbers(input){
+    input.value = input.value.replace(/[^0-9]/g,'');
+}
+
+// USERNAME
+function validateUsername(){
+    if(!/^[A-Za-z]{6,}$/.test(username.value)){
+        userError.innerText="Username must be 6 letters";
+        username.classList.add("invalid");
+        return false;
+    }
+    userError.innerText="";
+    username.classList.remove("invalid");
+    username.classList.add("valid");
+    return true;
+}
+
+// EMAIL
+function validateEmail(){
+    if(!email.value.includes("@") || !email.value.includes(".")){
+        emailError.innerText="Invalid email";
+        email.classList.add("invalid");
+        return false;
+    }
+    emailError.innerText="";
+    email.classList.remove("invalid");
+    email.classList.add("valid");
+    return true;
+}
+
+// PASSWORD
+function validatePassword(){
+    if(!/^(?=.*[A-Z])(?=.*\d)(?=.*[\W]).{8,}$/.test(password.value)){
+        passError.innerText="8+ chars, 1 uppercase, number, special";
+        password.classList.add("invalid");
+        return false;
+    }
+    passError.innerText="";
+    password.classList.remove("invalid");
+    password.classList.add("valid");
+    return true;
+}
+
+// CONFIRM PASSWORD
+function validateConfirm(){
+    if(password.value !== confirmPassword.value){
+        confirmError.innerText="Passwords not match";
+        confirmPassword.classList.add("invalid");
+        return false;
+    }
+    confirmError.innerText="";
+    confirmPassword.classList.remove("invalid");
+    confirmPassword.classList.add("valid");
+    return true;
+}
+
+// MOBILE
+function validateMobile(){
+    if(!/^\d{10}$/.test(mobile.value)){
+        mobileError.innerText="Must be 10 digits";
+        mobile.classList.add("invalid");
+        return false;
+    }
+    mobileError.innerText="";
+    mobile.classList.remove("invalid");
+    mobile.classList.add("valid");
+    return true;
+}
+
+// AADHAAR
+function validateAadhaar(){
+    if(!/^\d{12}$/.test(aadhaar.value)){
+        aadhaarError.innerText="Must be 12 digits";
+        aadhaar.classList.add("invalid");
+        return false;
+    }
+    aadhaarError.innerText="";
+    aadhaar.classList.remove("invalid");
+    aadhaar.classList.add("valid");
+    return true;
+}
+
+// REAL-TIME FOR OTHER FIELDS
+username.oninput = validateUsername;
+email.oninput = validateEmail;
+password.oninput = validatePassword;
+confirmPassword.oninput = validateConfirm;
+
+// REGISTER
+function register(){
+
+    let isValid = true;
+
+    if(!validateUsername()) isValid=false;
+    if(!validateEmail()) isValid=false;
+    if(!validatePassword()) isValid=false;
+    if(!validateConfirm()) isValid=false;
+    if(!validateMobile()) isValid=false;
+    if(!validateAadhaar()) isValid=false;
+
+    if(!isValid){
+        alert("? Fix all errors first");
+        return;
+    }
+
+    let userData={
+        username:username.value,
+        password:password.value,
+        email:email.value,
+        mobile:mobile.value,
+        aadhaar:aadhaar.value
+    };
+
+    localStorage.setItem(username.value,JSON.stringify(userData));
+
+    alert("? Registration Successful");
+}
+
+</script>
+
+</body>
+</html>
+
+regist
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+
+<style>
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    width: 350px;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0px 10px 25px rgba(0,0,0,0.3);
+}
+
+h2 {
+    text-align: center;
+}
+
+/* Inputs */
+input, select {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+/* Button */
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 6px;
+    background: #007bff;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+/* Message */
+.error {
+    color: red;
+    text-align: center;
+    margin-top: 10px;
+}
+
+p {
+    text-align: center;
+}
+
+a {
+    color: #007bff;
+    font-weight: bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>Login</h2>
+
+    <!-- ROLE SELECTION -->
+
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <select id="role">
+        <option value="">Select Role</option>
+        <option value="user">Customer</option>
+        <option value="admin">Admin</option>
+    </select>
+
+    
+
+    <button onclick="login()">Login</button>
+
+    <div id="msg" class="error"></div>
+
+    <p>
+        New user? <a href="regist.html">Register here</a>
+    </p>
+
+</div>
+
+<script>
+
+function login() {
+    let role = document.getElementById("role").value;
+    let username = document.getElementById("username").value.trim();
+    let password = document.getElementById("password").value;
+    let msg = document.getElementById("msg");
+
+    msg.innerText = "";
+
+    if (role === "") {
+        msg.innerText = "Please select role";
+        return;
+    }
+
+    if (username === "" || password === "") {
+        msg.innerText = "Username & Password required";
+        return;
+    }
+
+    // ? ADMIN LOGIN
+    // ? ADMIN LOGIN
+if (role === "admin") {
+    if (password === "admin") {
+
+        // ? Allow ANY username for admin
+        localStorage.setItem("currentUser", username);
+
+        window.location.href = "admin.html";
+
+    } else {
+        msg.innerText = "? Invalid Admin password";
+    }
+    return;
+}
+
+    // ? CUSTOMER LOGIN
+    if (role === "user") {
+
+        let userData = localStorage.getItem(username);
+
+        if (!userData) {
+            msg.innerText = "? User not found. Please register!";
+            return;
+        }
+
+        userData = JSON.parse(userData);
+
+        if (userData.password === password) {
+            localStorage.setItem("currentUser", username);
+
+            // ? IMPORTANT CHANGE HERE
+            window.location.href = "confirmation.html";
+
+        } else {
+            msg.innerText = "? Incorrect password";
+        }
+    }
+}
+</script>
+
+</body>
+</html>
+
+login
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Railway Portal</title>
+
+<style>
+body { font-family: Arial; margin: 0; background: #f4f6f9; }
+header { background: #2c3e50; color: white; padding: 15px; text-align: center; }
+
+nav { display: flex; background: #34495e; }
+nav button {
+    flex: 1; padding: 10px; border: none;
+    background: #34495e; color: white; cursor: pointer;
+}
+nav button:hover { background: #1abc9c; }
+
+.container { padding: 20px; }
+.card { background: white; padding: 15px; margin: 10px 0; border-radius: 6px; }
+.hidden { display: none; }
+
+input, select {
+    width: 100%; padding: 8px; margin: 5px 0;
+}
+
+button.primary {
+    background: #1abc9c; color: white;
+    padding: 8px; border: none;
+}
+
+button.danger {
+    background: red; color: white;
+    padding: 5px; border: none;
+}
+
+table {
+    width: 100%; border-collapse: collapse; margin-top: 10px;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 6px; text-align: center;
+}
+
+th {
+    background: #1abc9c;
+    color: white;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>Customer Portal</h2>
+</header>
+
+<nav>
+<button onclick="showSection('home')">Home</button>
+<button onclick="showSection('book')">Book Ticket</button>
+<button onclick="showSection('view')">View Tickets</button>
+<button onclick="showSection('profile')">Profile</button>
+<button onclick="logout()">Logout</button>
+</nav>
+
+<div class="container">
+
+<!-- HOME -->
+<div id="home">
+<div class="card">
+<h3>Dashboard</h3>
+
+<p><b>Tickets per class:</b></p>
+<div id="classStats"></div>
+
+<p><b>Total Tickets:</b></p>
+<div id="totalCount"></div>
+
+<p><b>Sales per quarter:</b></p>
+<div id="quarterSales"></div>
+
+<p><b>Summary Table:</b></p>
+<div id="summaryTable"></div>
+
+</div>
+</div>
+
+<!-- BOOK -->
+<div id="book" class="hidden">
+<div class="card">
+<h3>Book Ticket</h3>
+
+<input id="name" placeholder="Name"
+oninput="this.value=this.value.replace(/[^A-Za-z ]/g,'')">
+
+<input id="mobile" placeholder="Mobile"
+maxlength="10"
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
+<input id="age" type="text" placeholder="Age"
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
+<input id="date" type="date">
+
+<input id="boarding" placeholder="Boarding">
+<input id="destination" placeholder="Destination">
+
+<select id="category">
+<option>First Class</option>
+<option>AC Tier 1</option>
+<option>AC Tier 2</option>
+<option>Tatkal</option>
+</select>
+
+<select id="train">
+<option>Train 101</option>
+<option>Train 202</option>
+<option>Train 303</option>
+</select>
+
+<input id="tickets" type="number" min="1" value="1">
+
+<button class="primary" onclick="bookTicket()">Submit</button>
+</div>
+</div>
+
+<!-- CONFIRM -->
+<div id="confirm" class="hidden">
+<div class="card">
+<h3>Booking Confirmation</h3>
+<p id="confirmData"></p>
+</div>
+</div>
+
+<!-- VIEW -->
+<div id="view" class="hidden">
+<div class="card">
+<h3>Your Tickets</h3>
+<div id="ticketList"></div>
+</div>
+</div>
+
+<!-- PROFILE -->
+<div id="profile" class="hidden">
+<div class="card">
+<h3>Profile</h3>
+
+<input id="profileName" readonly>
+<input id="profileEmail" placeholder="Email">
+<input id="profileMobile" placeholder="Mobile">
+<input id="profileAddress" placeholder="Address">
+
+<h4>Change Password</h4>
+<input id="oldPwd" type="password" placeholder="Old Password">
+<input id="newPwd" type="password" placeholder="New Password">
+
+<button class="primary" onclick="updateProfile()">Update</button>
+<button class="danger" onclick="deleteProfile()">Delete</button>
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// NAV
+function showSection(id) {
+document.querySelectorAll(".container > div").forEach(d => d.classList.add("hidden"));
+document.getElementById(id).classList.remove("hidden");
+
+if (id === "home") loadStats();
+if (id === "view") loadTickets();
+if (id === "profile") loadProfile();
+}
+
+// ? FIXED BOOK FUNCTION
+function bookTicket() {
+
+let nameVal = document.getElementById("name").value.trim();
+let mobileVal = document.getElementById("mobile").value.trim();
+let ageVal = document.getElementById("age").value.trim();
+let dateVal = document.getElementById("date").value;
+let boardingVal = document.getElementById("boarding").value.trim();
+let destinationVal = document.getElementById("destination").value.trim();
+
+if (dateVal === "") {
+    alert("Select date");
+    return;
+}
+
+if (
+    nameVal === "" ||
+    mobileVal === "" ||
+    ageVal === "" ||
+    boardingVal === "" ||
+    destinationVal === ""
+) {
+    alert("Fill all fields");
+    return;
+}
+
+if (mobileVal.length !== 10) {
+alert("Mobile must be 10 digits"); return;
+}
+
+let boardingDate = new Date(dateVal);
+let arrivalDate = new Date(boardingDate);
+arrivalDate.setDate(boardingDate.getDate()+1);
+
+let ticket = {
+ticketId: "T"+Date.now(),
+userId: "U"+Math.floor(Math.random()*10000),
+trainId: train.value,
+name: nameVal,
+mobile: mobileVal,
+age: ageVal,
+boarding: boardingVal,
+destination: destinationVal,
+boardingDateTime: boardingDate.toDateString(),
+arrivalDateTime: arrivalDate.toDateString(),
+category: category.value,
+tickets: tickets.value
+};
+
+let list = JSON.parse(sessionStorage.getItem("tickets")||"[]");
+list.push(ticket);
+sessionStorage.setItem("tickets", JSON.stringify(list));
+
+showSection("confirm");
+
+confirmData.innerHTML =
+`Ticket ID: ${ticket.ticketId}<br>
+ Name: ${ticket.name}<br>
+ Train: ${ticket.trainId}`;
+
+// CLEAR
+document.getElementById("name").value="";
+document.getElementById("mobile").value="";
+document.getElementById("age").value="";
+document.getElementById("date").value="";
+document.getElementById("boarding").value="";
+document.getElementById("destination").value="";
+document.getElementById("tickets").value="1";
+}
+
+// ? VIEW FULL TABLE
+function loadTickets() {
+let data = JSON.parse(sessionStorage.getItem("tickets")||"[]");
+
+let html = `<table>
+<tr>
+<th>Ticket ID</th><th>User ID</th><th>Train</th><th>Name</th>
+<th>Mobile</th><th>Age</th><th>From</th><th>To</th>
+<th>Boarding</th><th>Arrival</th><th>Class</th><th>No</th><th>Action</th>
+</tr>`;
+
+data.forEach(t=>{
+html+=`<tr>
+<td>${t.ticketId}</td>
+<td>${t.userId}</td>
+<td>${t.trainId}</td>
+<td>${t.name}</td>
+<td>${t.mobile}</td>
+<td>${t.age}</td>
+<td>${t.boarding}</td>
+<td>${t.destination}</td>
+<td>${t.boardingDateTime}</td>
+<td>${t.arrivalDateTime}</td>
+<td>${t.category}</td>
+<td>${t.tickets}</td>
+<td><button class="danger" onclick="cancelTicket('${t.ticketId}')">Cancel</button></td>
+</tr>`;
+});
+
+html+="</table>";
+ticketList.innerHTML=html;
+}
+
+// CANCEL
+function cancelTicket(id){
+if(confirm("Cancel ticket?")){
+let list=JSON.parse(sessionStorage.getItem("tickets")||"[]");
+list=list.filter(t=>t.ticketId!==id);
+sessionStorage.setItem("tickets",JSON.stringify(list));
+loadTickets();
+}
+}
+
+// ? HOME FIX
+function loadStats(){
+
+let data = JSON.parse(sessionStorage.getItem("tickets")||"[]");
+
+let classCount = {};
+let total = 0;
+
+data.forEach(t=>{
+let num = parseInt(t.tickets)||0;
+total += num;
+classCount[t.category] = (classCount[t.category]||0)+num;
+});
+
+let out="";
+for(let c in classCount){
+out += c+" : "+classCount[c]+"<br>";
+}
+classStats.innerHTML = out || "No tickets";
+
+totalCount.innerHTML = total;
+
+// SUMMARY TABLE
+let table = `<table>
+<tr><th>Name</th><th>Class</th><th>No. Tickets</th></tr>`;
+
+data.forEach(t=>{
+table += `<tr>
+<td>${t.name}</td>
+<td>${t.category}</td>
+<td>${t.tickets}</td>
+</tr>`;
+});
+
+table += "</table>";
+summaryTable.innerHTML = table;
+
+quarterSales.innerHTML =
+`Q1: 560<br>
+ Q2: 1245<br>
+ Q3: 750<br>
+ Q4: 2150`;
+}
+
+// PROFILE
+function loadProfile(){
+let data=JSON.parse(localStorage.getItem("user"))||{name:"Saranya"};
+profileName.value=data.name;
+profileEmail.value=data.email||"";
+profileMobile.value=data.mobile||"";
+profileAddress.value=data.address||"";
+}
+
+function updateProfile(){
+alert("Profile updated");
+}
+
+function deleteProfile(){
+if(confirm("Delete profile?")){
+localStorage.clear();
+location.reload();
+}
+}
+
+// LOGOUT
+function logout(){
+sessionStorage.clear();
+location.reload();
+}
+
+window.onload=()=>loadStats();
+
+</script>
+
+</body>
+</html>
+confirmation
+

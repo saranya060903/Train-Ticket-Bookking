@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+
+<style>
+body { 
+    margin:0; font-family:"Segoe UI"; background:linear-gradient(135deg,#4facfe,#00f2fe);
+    display:flex; justify-content:center; align-items:center; height:100vh;
+}
+.container { width:350px; background:white; padding:25px; border-radius:12px; box-sizing: border-box; }
+input, select { width:100%; margin-top:10px; padding:10px; box-sizing: border-box; }
+button { width:100%; padding:12px; margin-top:15px; background:#007bff; color:white; border:none; cursor:pointer; font-weight:bold; }
+.error { color:red; text-align:center; margin-top:10px;}
+
+/* --- POPUP MODAL STYLES --- */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center;
+    align-items: center; z-index: 1000; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.modal-overlay.show { opacity: 1; pointer-events: auto; }
+.modal-box {
+    background: white; padding: 30px; border-radius: 10px; text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 300px;
+    transform: scale(0.7); transition: transform 0.3s ease;
+}
+.modal-overlay.show .modal-box { transform: scale(1); }
+.modal-box h3 { margin: 0 0 10px 0; color: #2c3e50; }
+.modal-box p { margin: 0 0 20px 0; color: #1abc9c; font-size: 18px; font-weight: bold; }
+.success-icon { font-size: 40px; color: #2ecc71; margin-bottom: 10px; }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+<h2>Login</h2>
+
+<input id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+
+<select id="role">
+<option value="">Select Role</option>
+<option value="user">Customer</option>
+<option value="admin">Admin</option>
+</select>
+
+<button onclick="login()">Login</button>
+<div id="msg" class="error"></div>
+
+<p>New user? <a href="regist.html">Register here</a></p>
+</div>
+
+<div id="welcomeModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="success-icon">✔</div>
+        <h3>Login Successful!</h3>
+        <p id="welcomeMsg">Welcome, User!</p>
+    </div>
+</div>
+
+<script>
+
+function login(){
+    let role = document.getElementById("role").value;
+    let user = username.value.trim();
+    let pass = password.value;
+
+    msg.innerText="";
+
+    if(role===""){ msg.innerText="Select role"; return; }
+    if(user==="" || pass===""){ msg.innerText="Enter details"; return; }
+
+    // ADMIN LOGIN CHECK
+    if(role==="admin"){
+        if(pass==="admin"){
+            localStorage.setItem("currentUser", user);
+            showWelcomePopup(user, "admin.html");
+        } else {
+            msg.innerText="Wrong admin password";
+        }
+        return;
+    }
+
+    // USER LOGIN CHECK
+    let data = localStorage.getItem(user);
+    if(!data){ msg.innerText="User not found"; return; }
+
+    data = JSON.parse(data);
+
+    if(data.password === pass){
+        localStorage.setItem("currentUser", user);
+        showWelcomePopup(user, "confirmation.html");
+    } else {
+        msg.innerText="Enter correct password";
+    }
+}
+
+// Function to trigger the Welcome Popup and Redirect after 2 seconds
+function showWelcomePopup(username, redirectUrl) {
+    document.getElementById("welcomeMsg").innerText = "Welcome, " + username + "! 👋";
+    let modal = document.getElementById("welcomeModal");
+    
+    // Show popup
+    modal.classList.add("show");
+
+    // Automatically navigate to next page after 2 seconds (2000 milliseconds)
+    setTimeout(function() {
+        window.location.href = redirectUrl;
+    }, 2000);
+}
+
+</script>
+
+</body>
+</html>

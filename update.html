@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Update Profile</title>
+
+<style>
+body {
+    font-family: Arial;
+    padding: 20px;
+    background: #f4f6f9;
+}
+
+input {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    box-sizing: border-box;
+}
+
+/* Base button styles */
+button {
+    padding: 10px 20px;
+    margin-top: 10px;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 4px;
+}
+
+.backBtn {
+    background: gray;
+    width: auto; /* Takes only enough width */
+}
+
+/* Strictly forcing the update button to take only enough width */
+.updateBtn {
+    background: green;
+    width: auto !important;     /* Prevents taking full width */
+    min-width: 120px;           /* Gives a neat, sufficient width */
+    display: inline-block;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>Update Profile</h2>
+
+<button class="backBtn" onclick="goBack()">⬅ Back to Profile</button>
+
+<br><br>
+
+<input id="email" placeholder="Email">
+<input id="mobile" placeholder="Mobile" maxlength="10"
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
+<input id="aadhaar" placeholder="Aadhaar" maxlength="12"
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
+<input id="address" placeholder="Address">
+
+<h3>Change Password</h3>
+
+<input id="oldPwd" type="password" placeholder="Old Password">
+<input id="newPwd" type="password" placeholder="New Password">
+
+<br>
+<button class="updateBtn" onclick="updateProfile()">Update</button>
+
+<script>
+
+// GET USER
+let username = localStorage.getItem("currentUser");
+let data = JSON.parse(localStorage.getItem(username)) || {};
+
+// PREFILL VALUES
+document.getElementById("email").value = data.email || "";
+document.getElementById("mobile").value = data.mobile || "";
+document.getElementById("aadhaar").value = data.aadhaar || "";
+document.getElementById("address").value = data.address || "";
+
+// BACK FUNCTION
+function goBack(){
+    window.close();
+}
+
+// UPDATE FUNCTION
+function updateProfile(){
+
+    // PASSWORD CHECK
+    if(oldPwd.value && oldPwd.value !== data.password){
+        alert("Wrong old password");
+        return;
+    }
+
+    // KEEP OLD VALUES IF EMPTY
+    data.email = email.value.trim() === "" ? data.email : email.value.trim();
+    data.mobile = mobile.value.trim() === "" ? data.mobile : mobile.value.trim();
+    data.aadhaar = aadhaar.value.trim() === "" ? data.aadhaar : aadhaar.value.trim();
+    data.address = address.value.trim() === "" ? data.address : address.value.trim();
+
+    // PASSWORD UPDATE
+    if(newPwd.value.trim() !== ""){
+        data.password = newPwd.value;
+    }
+
+    // SAVE
+    localStorage.setItem(username, JSON.stringify(data));
+
+    alert("Updated Successfully");
+
+    // REFRESH PROFILE PAGE Safely
+    if (window.opener && !window.opener.closed) {
+        window.opener.location.reload();
+    }
+
+    // CLOSE TAB
+    window.close();
+}
+
+</script>
+
+</body>
+</html>

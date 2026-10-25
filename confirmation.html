@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Railway Portal</title>
+
+<style>
+body { font-family: Arial; margin: 0; background: #f4f6f9; }
+header { background: #2c3e50; color: white; padding: 15px; text-align: center; }
+
+nav { display: flex; background: #34495e; }
+nav button {
+    flex: 1; padding: 10px; border: none;
+    background: #34495e; color: white; cursor: pointer;
+}
+nav button:hover { background: #1abc9c; }
+
+.container { padding: 20px; }
+.card { background: white; padding: 15px; margin: 10px 0; border-radius: 6px; }
+.hidden { display: none; }
+
+input, select {
+    width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box;
+}
+
+button.primary {
+    background: #1abc9c; color: white;
+    padding: 8px; border: none; width: 100%; cursor: pointer;
+}
+
+button.danger {
+    background: red; color: white;
+    padding: 5px; border: none; cursor: pointer;
+}
+
+table {
+    width: 100%; border-collapse: collapse; margin-top: 10px;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 6px; text-align: center;
+}
+
+th {
+    background: #1abc9c;
+    color: white;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2 id="portalHeader">Customer Portal</h2>
+</header>
+
+<nav>
+<button onclick="showSection('home')">Home</button>
+<button onclick="showSection('book')">Book Ticket</button>
+<button onclick="showSection('view')">View Tickets</button>
+<button onclick="showSection('profile')">Profile</button>
+<button onclick="logout()">Logout</button>
+</nav>
+
+<div class="container">
+
+<div id="home">
+<div class="card">
+<h3>Dashboard</h3>
+
+<p><b>Tickets per class:</b></p>
+<div id="classStats"></div>
+
+<p><b>Total Tickets:</b></p>
+<div id="totalCount"></div>
+
+<p><b>Sales per quarter:</b></p>
+<div id="quarterSales"></div>
+
+<p><b>Summary Table:</b></p>
+<div id="summaryTable"></div>
+
+</div>
+</div>
+
+<div id="book" class="hidden">
+<div class="card">
+<h3>Book Ticket</h3>
+
+<input id="name" placeholder="Passenger Name" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')">
+<input id="mobile" placeholder="Mobile" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+<input id="age" placeholder="Age" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+
+<input id="fullDateTime" placeholder="DD/MM/YYYY HH:MM AM/PM" maxlength="22" onkeydown="checkBackspace(event)" oninput="smartDateTimeFormatter(this)">
+
+<input id="boarding" placeholder="Boarding">
+<input id="destination" placeholder="Destination">
+
+<select id="category">
+<option>First Class</option>
+<option>AC Tier 1</option>
+<option>AC Tier 2</option>
+<option>Tatkal</option>
+</select>
+
+<select id="train"></select>
+
+<input id="tickets" type="number" min="1" value="1">
+
+<button class="primary" onclick="bookTicket()">Submit</button>
+</div>
+</div>
+
+<div id="confirm" class="hidden">
+<div class="card">
+<h3>Booking Confirmation</h3>
+<p id="confirmData"></p>
+</div>
+</div>
+
+<div id="view" class="hidden">
+<div class="card">
+<h3>Your Tickets</h3>
+<div id="ticketList"></div>
+</div>
+</div>
+
+<div id="profile" class="hidden">
+<div class="card">
+<h3>Profile</h3>
+
+<input id="profileName" readonly>
+<input id="profileEmail" readonly>
+<input id="profileMobile" readonly>
+<input id="profileAadhaar" readonly>
+
+<br>
+
+<button class="primary" onclick="updateProfile()">Update</button>
+<button class="danger" onclick="deleteProfile()">Delete</button>
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+function displayWelcomeMessage() {
+    let username = localStorage.getItem("currentUser");
+    let headerText = document.getElementById("portalHeader");
+    if (username) {
+        headerText.innerText = "Welcome, " + username + "!";
+    } else {
+        headerText.innerText = "Customer Portal";
+    }
+}
+
+function showSection(id){
+document.querySelectorAll(".container > div").forEach(d=>d.classList.add("hidden"));
+document.getElementById(id).classList.remove("hidden");
+
+displayWelcomeMessage(); 
+
+if(id === "home") loadStats();
+if(id === "book") populateRegisteredTrains(); 
+if(id === "view") loadTickets();
+if(id === "profile") loadProfile();
+}
+
+// ✅ FIXED: Old trains and New admin trains will now append together
+function populateRegisteredTrains() {
+    let trainSelect = document.getElementById("train");
+    trainSelect.innerHTML = "";
+
+    // 1. First add the old default trains
+    let defaultTrains = ["Train 101", "Train 202", "Train 303"];
+    defaultTrains.forEach(t => {
+        let opt = document.createElement("option");
+        opt.value = t;
+        opt.innerText = t;
+        trainSelect.appendChild(opt);
+    });
+
+    // 2. Then retrieve and add newly registered admin trains dynamically
+    let registeredTrains = JSON.parse(localStorage.getItem("registeredTrains") || "[]");
+    if (registeredTrains.length > 0) {
+        registeredTrains.forEach(trn => {
+            let opt = document.createElement("option");
+            opt.value = trn.name;
+            opt.innerText = `${trn.name} (${trn.from} ➔ ${trn.to})`;
+            trainSelect.appendChild(opt);
+        });
+    }
+}
+
+let isDeleting = false;
+
+function checkBackspace(event) {
+    if (event.keyCode === 8 || event.keyCode === 46) {
+        isDeleting = true;
+    } else {
+        isDeleting = false;
+    }
+}
+
+function smartDateTimeFormatter(input) {
+    let cursor = input.selectionStart;
+    let originalLength = input.value.length;
+    
+    if (isDeleting) {
+        isDeleting = false; 
+        return;
+    }
+
+    let text = input.value.toUpperCase();
+    text = text.replace(/[^0-9 \/:APM]/g, ''); 
+    
+    let numbers = text.replace(/[^0-9]/g, '');
+    let textOnly = text.replace(/[^A-Z]/g, '');
+    let ampmStr = textOnly.includes('P') ? 'PM' : (textOnly.includes('A') ? 'AM' : '');
+
+    let formatted = "";
+
+    if (numbers.length >= 1) {
+        let day = numbers.slice(0, 2);
+        if (day.length === 1 && parseInt(day) > 3) {
+            day = "0" + day;
+            numbers = day + numbers.slice(1);
+        }
+        formatted += day;
+        if (day.length === 2) formatted += "/";
+    }
+
+    if (numbers.length >= 3) {
+        let month = numbers.slice(2, 4);
+        if (month.length === 1 && parseInt(month) > 1) {
+            month = "0" + month;
+            numbers = numbers.slice(0, 2) + month + numbers.slice(3);
+        }
+        formatted += month;
+        if (month.length === 2) formatted += "/";
+    }
+
+    if (numbers.length >= 5) {
+        let year = numbers.slice(4, 8);
+        formatted += year;
+        if (year.length === 4) {
+            formatted += " "; 
+        }
+    }
+
+    if (numbers.length >= 9) {
+        let hour = numbers.slice(8, 10);
+        if (hour.length === 1 && parseInt(hour) > 1) {
+            hour = "0" + hour;
+            numbers = numbers.slice(0, 8) + hour + numbers.slice(9);
+        }
+        formatted += hour;
+        if (hour.length === 2) formatted += ":";
+    }
+
+    if (numbers.length >= 11) {
+        let min = numbers.slice(10, 12);
+        formatted += min;
+        if (min.length === 2) {
+            formatted += " "; 
+        }
+    }
+
+    if (numbers.length >= 12 || ampmStr !== "") {
+        formatted = formatted.trim();
+        if(!formatted.endsWith("PM") && !formatted.endsWith("AM")) {
+            formatted += " " + (ampmStr || "AM");
+        }
+    }
+
+    input.value = formatted;
+    
+    let diff = input.value.length - originalLength;
+    input.setSelectionRange(cursor + diff, cursor + diff);
+}
+
+function convertToCustomDisplayFormat(dateObj) {
+    const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    let dayName = weekdays[dateObj.getDay()];
+    let dayNum = dateObj.getDate();
+    let year = dateObj.getFullYear();
+    
+    let hours = dateObj.getHours();
+    let minutes = String(dateObj.getMinutes()).padStart(2, '0');
+    let ampm = hours >= 12 ? 'PM' : 'AM';
+    
+    hours = hours % 12;
+    hours = hours ? hours : 12; 
+    let strHours = String(hours).padStart(2, '0');
+    
+    return `${dayName} ${dayNum}, ${year} - ${strHours}:${minutes} ${ampm}`;
+}
+
+function parseInputToDate(fullStr) {
+    let parts = fullStr.split(" ");
+    let datePart = parts[0];
+    let timePart = parts[1];
+    let ampm = parts[2];
+
+    let [day, month, year] = datePart.split('/');
+    let [hours, minutes] = timePart.split(':');
+    hours = parseInt(hours);
+    minutes = parseInt(minutes);
+
+    if (ampm === 'PM' && hours < 12) hours += 12;
+    if (ampm === 'AM' && hours === 12) hours = 0;
+
+    return new Date(year, month - 1, day, hours, minutes);
+}
+
+function getOrGenerateUserId() {
+    let loggedInUser = localStorage.getItem("currentUser");
+    if (loggedInUser) {
+        let userData = JSON.parse(localStorage.getItem(loggedInUser) || "{}");
+        if (userData.userId) {
+            return userData.userId;
+        } else {
+            let newId = "U" + Math.floor(1000 + Math.random() * 9000);
+            userData.userId = newId;
+            localStorage.setItem(loggedInUser, JSON.stringify(userData));
+            return newId;
+        }
+    }
+    return "G-Guest";
+}
+
+function bookTicket(){
+let nameVal=document.getElementById("name").value.trim();
+let mobileVal=document.getElementById("mobile").value.trim();
+let ageVal=document.getElementById("age").value.trim();
+let dateTimeVal=document.getElementById("fullDateTime").value.trim();
+let boardingVal=document.getElementById("boarding").value.trim();
+let destinationVal=document.getElementById("destination").value.trim();
+
+if(!nameVal||!mobileVal||!ageVal||!dateTimeVal||!boardingVal||!destinationVal){
+    alert("Fill all fields"); return;
+}
+
+let masterRegex = /^([0-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])\/([0-9]{4})\s(0[1-9]|1[0-2]):[0-5][0-9]\s(AM|PM)$/;
+if(!masterRegex.test(dateTimeVal)){
+    alert("Enter valid Date Time Format! (e.g., 06/09/2026 12:00 AM)"); return;
+}
+
+if(mobileVal.length!==10){alert("Mobile must be exactly 10 digits");return;}
+
+let correctUserId = getOrGenerateUserId();
+let loggedInUser = localStorage.getItem("currentUser") || "guest"; 
+
+let boardingDateObj = parseInputToDate(dateTimeVal);
+let arrivalDateObj = new Date(boardingDateObj);
+arrivalDateObj.setHours(arrivalDateObj.getHours() + 8);
+arrivalDateObj.setMinutes(arrivalDateObj.getMinutes() + 30);
+
+let ticket={
+ticketId:"T"+Date.now(),
+userId: correctUserId, 
+bookedBy: loggedInUser, 
+name:nameVal,
+trainId:document.getElementById("train").value,
+mobile:mobileVal,
+age:ageVal,
+boarding:boardingVal,
+destination:destinationVal,
+boardingDateTime: convertToCustomDisplayFormat(boardingDateObj),
+arrivalDateTime: convertToCustomDisplayFormat(arrivalDateObj),
+category:document.getElementById("category").value,
+tickets:document.getElementById("tickets").value
+};
+
+let list=JSON.parse(localStorage.getItem("tickets")||"[]");
+list.push(ticket);
+localStorage.setItem("tickets",JSON.stringify(list));
+
+showSection("confirm");
+
+document.getElementById("confirmData").innerHTML=
+`Ticket ID: ${ticket.ticketId}<br>Passenger Name: ${ticket.name}<br>Train: ${ticket.trainId}`;
+
+document.getElementById("name").value="";
+document.getElementById("mobile").value="";
+document.getElementById("age").value="";
+document.getElementById("fullDateTime").value="";
+document.getElementById("boarding").value="";
+document.getElementById("destination").value="";
+document.getElementById("tickets").value="1";
+}
+
+function loadTickets(){
+let allTickets=JSON.parse(localStorage.getItem("tickets")||"[]");
+let loggedInUser = localStorage.getItem("currentUser") || "guest";
+
+let userTickets = allTickets.filter(t => t.bookedBy === loggedInUser);
+
+let html=`<table>
+<tr>
+<th>Ticket ID</th>
+<th>Train ID</th>
+<th>User ID</th>
+<th>Passenger Name</th>
+<th>Boarding Station</th>
+<th>Destination Station</th>
+<th>Boarding Date & Time</th>
+<th>Arrival Date & Time</th>
+<th>Number of Tickets Booked</th>
+<th>Action</th>
+</tr>`;
+
+if(userTickets.length === 0){
+    html += `<tr><td colspan="10">No tickets found for your account</td></tr>`;
+} else {
+    userTickets.forEach(t=>{
+    html+=`<tr>
+    <td>${t.ticketId}</td>
+    <td>${t.trainId}</td>
+    <td>${t.userId}</td>
+    <td>${t.name}</td>
+    <td>${t.boarding}</td>
+    <td>${t.destination}</td>
+    <td>${t.boardingDateTime}</td>
+    <td>${t.arrivalDateTime}</td>
+    <td>${t.tickets}</td>
+    <td><button class="danger" onclick="cancelTicket('${t.ticketId}')">Cancel</button></td>
+    </tr>`;
+    });
+}
+
+ticketList.innerHTML=html+"</table>";
+}
+
+function cancelTicket(id){
+if(confirm("Are you sure you want to cancel this ticket?")){
+let list=JSON.parse(localStorage.getItem("tickets")||"[]");
+list=list.filter(t=>t.ticketId!==id);
+localStorage.setItem("tickets",JSON.stringify(list));
+loadTickets();
+}
+}
+
+function loadStats(){
+let allTickets=JSON.parse(localStorage.getItem("tickets")||"[]");
+let loggedInUser = localStorage.getItem("currentUser") || "guest";
+
+let userTickets = allTickets.filter(t => t.bookedBy === loggedInUser);
+
+let classCount={"First Class":0, "AC Tier 1":0, "AC Tier 2":0, "Tatkal":0}, total=0;
+
+userTickets.forEach(t=>{
+let n=parseInt(t.tickets)||0;
+total+=n;
+if (classCount[t.category] !== undefined) {
+    classCount[t.category] += n;
+}
+});
+
+let out="";
+for(let c in classCount){
+out+=c+" : "+classCount[c]+"<br>";
+}
+classStats.innerHTML=out;
+totalCount.innerHTML=total;
+
+let table=`<table>
+<tr><th>Passenger Name</th><th>Class</th><th>No. Tickets</th></tr>`;
+
+userTickets.forEach(t=>{
+table+=`<tr>
+<td>${t.name}</td>
+<td>${t.category}</td>
+<td>${t.tickets}</td>
+</tr>`;
+});
+
+summaryTable.innerHTML=table+"</table>";
+
+quarterSales.innerHTML=`Q1: 560<br>Q2: 1245<br>Q3: 750<br>Q4: 2150`;
+}
+
+function loadProfile(){
+let username=localStorage.getItem("currentUser");
+if(!username) return;
+let data=JSON.parse(localStorage.getItem(username)|| "{}");
+
+profileName.value=data.username||"";
+profileEmail.value=data.email||"";
+profileMobile.value=data.mobile||"";
+profileAadhaar.value=data.aadhaar||"";
+}
+
+function updateProfile(){
+window.open("update.html","_blank");
+}
+
+function deleteProfile(){
+let username=localStorage.getItem("currentUser");
+if(confirm("Delete profile?")){
+localStorage.removeItem(username);
+localStorage.removeItem("currentUser");
+window.location.href="index.html";
+}
+}
+
+function logout(){
+if(confirm("Are you sure to logout?")){
+localStorage.removeItem("currentUser");
+window.location.href="index.html";
+}
+}
+
+window.addEventListener("focus",function(){
+let active=document.querySelector(".container > div:not(.hidden)");
+if(active && active.id==="profile"){
+loadProfile();
+}
+});
+
+window.onload = function() {
+    displayWelcomeMessage();
+    loadStats();
+};
+</script>
+</body>
+</html>
